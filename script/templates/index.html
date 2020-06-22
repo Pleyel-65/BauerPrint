@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <script src="{{ url_for('static',filename='js/jquery-3.5.1.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static',filename='js/bootstrap.bundle.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static',filename='js/printer_custom_js.js') }}"></script>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='css/bootstrap.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='css/printer_custom_css.css') }}">
+        <meta charset="UTF-8">
+    </head>
+    <body style="background: linear-gradient(0.25turn, #212121, #4e3e3e, #212121)">
+        <div class="container-fluid">
+            <div class="row" style="width:100vw: height: 100vh">
+                <div class="col-xl-4 col-lg-3 col-md-2 col-sm-1 sm-hide"></div>
+                <div class="col-xl-4 col-sm-10 col-md-8 col-lg-6 col-12" id="rootContainer">
+                    <div class="row" style="height: 100vh">
+                        <div class="col-12" style="max-height: 95vh; height=100vh">
+                            <!--Title-->
+                            <div class="row">
+                                <div id="mainTitle">
+                                    <h1>Bauer Print</h1>
+                                    <hr/>
+                                </div>
+                            </div>
+
+                            <!--Photo file-->
+                            <div class="row">
+                                <div id="photoFiler" class="col-10" style="padding-right: 15px">
+                                    <div class="row" id="fileBrowser">
+                                        <div class="col-sm-4 col-12">
+                                            <label for="files" class="btn btn-dark">
+                                                Browse
+                                            </label>
+                                        </div>
+                                        <div class="col-8 sm-hide" style="padding-left: 0">
+                                            <label for="files" class="btn" style="padding-left: 0; text-align:left">
+                                                <span style="font-style: italic" class="file-label">No image</span>
+                                            </label>
+                                        </div>
+                                        <!--Hidden input-->
+                                        <input id="files" style="display:none;" type="file">
+                                    </div>
+                                </div>
+                                <div class="col-2" id="photoFrame">
+                                    <div>
+                                        <div>
+                                            <img src="" alt="No photo" id="photoContainer">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--Text and Print Options-->
+                            <div class="row" style="padding-top: 15px">
+                                <!--Text Input-->
+                                <div class="col-12 col-sm-7 col-lapse">
+                                    <textarea class="form-control" id="textInput" placeholder="Enter text..." style="height:100%"></textarea>
+                                </div>
+                                <div class="col-12 col-sm-5 ">
+                                    <div class="row">
+                                        <div class="btn-group-vertical col-12" id="printOptions">
+                                            <!--Font Mode-->
+                                            <div class="btn-group">
+                                                <button class="btn btn-dark dropdown-toggle" id="fontModeButton" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                                    Font Mode
+                                                </button>
+                                                <div class="dropdown-menu" aria-labelledby="fontModeButton" style="width: 100%">
+                                                    <div class="dropdown-item">
+                                                        <span style="display: inline-block; width: 88%; padding-left: 7px">Alternate Font</span>
+                                                        <input type="checkbox" class="dropdown-item" id="alternateFontToggle" style="display: inline-block; vertical-align: middle; padding: 0.25rem 0.5rem; width: 12%">
+                                                    </div>
+                                                    <div class="dropdown-divider"></div>
+                                                    <div class="dropdown-item">
+                                                        <span style="display: inline-block; width: 88%; padding-left: 7px">Emphasize</span>
+                                                        <input type="checkbox" class="dropdown-item" id="emphasizeToggle" style="display: inline-block; vertical-align: middle; padding: 0.25rem 0.5rem; width: 12%">
+                                                    </div>
+                                                    <div class="dropdown-item">
+                                                        <span style="display: inline-block; width: 88%; padding-left: 7px">Underline</span>
+                                                        <input type="checkbox" class="dropdown-item" id="underlineToggle" style="display: inline-block; vertical-align: middle; padding: 0.25rem 0.5rem; width: 12%">
+                                                    </div>
+                                                    <div class="dropdown-divider"></div>
+                                                    <div class="dropdown-item">
+                                                        <span style="display: inline-block; width: 88%; padding-left: 7px">Double height</span>
+                                                        <input type="checkbox" class="dropdown-item" id="doubleHeightToggle" style="display: inline-block; vertical-align: middle; padding: 0.25rem 0.5rem; width: 12%">
+                                                    </div>
+                                                    <div class="dropdown-item">
+                                                        <span style="display: inline-block; width: 88%; padding-left: 7px">Double width</span>
+                                                        <input type="checkbox" class="dropdown-item" id="doubleWidthToggle" style="display: inline-block; vertical-align: middle; padding: 0.25rem 0.5rem; width: 12%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!--Font Size-->
+                                            <div class="input-group">
+                                                <div class="dropright btn-group input-group-prepend" style="width:100%">
+                                                    <button class="btn btn-dark dropdown-toggle" id="fontSizeButton" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                                        <span>Font size</span>
+                                                    </button>
+                                                    <div class="dropdown-menu" aria-labelledby="fontSizeButton" style="padding: 0;">
+                                                        <div class="dropdown-item" style="padding: 0.5rem 0.5rem;">
+                                                            <span style="display: inline-block; width: 12%; padding-left: 7px;">12</span>
+                                                            <input min="0" max="62" type="range" class="dropdown-item" id="fontSizeSlider" style="display: inline-block; vertical-align: middle; padding: 0.25rem 0.5rem; width: 88%;" value="12">
+                                                        </div>
+                                                    </div>
+                                                    <p class="input-group-text" style="width: 25%; display: flex; align-items : center; justify-content: center;">12</p>
+                                                </div>
+                                            </div>
+                                            <!--Justification-->
+                                            <div class="input-group">
+                                                <div class="dropright btn-group input-group-prepend" style="width:100%">
+                                                    <button class="btn btn-dark dropdown-toggle" id="justificationButton" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                                        Justification
+                                                    </button>
+                                                    <div class="dropdown-menu" aria-labelledby="justificationButton" style="padding: 0;">
+                                                        <div class="dropdown-item" style="padding: 0.5rem 0.5rem;">
+                                                            <div style="display: inline-block; width: 12%; padding-left: 7px;">
+                                                                <span>L</span>
+                                                            </div>
+                                                            <input min="0" max="2" type="range" class="dropdown-item" id="justificationSlider" style="display: inline-block; vertical-align: middle; padding: 0.25rem 0.5rem; width: 88%;" value="0">
+                                                        </div>
+                                                    </div>
+                                                    <p class="input-group-text" style="width: 25%; display: flex; align-items : center; justify-content: center;">L</p>
+                                                </div>
+                                            </div>
+                                            <!--Cut-->
+                                            <div class="input-group">
+                                                <div class="btn-group input-group-prepend" style="width:100%">
+                                                    <button class="btn btn-dark" type="button">
+                                                        Cut
+                                                    </button>
+                                                    <p class="input-group-text" style="width: 25%; display: flex; align-items : center; justify-content: center;">
+                                                        <input type="checkbox"  id="cutToggle">
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="blank-space"></div>
+                                        </div>
+                                        <!--Print !-->
+                                        <div class="col-12" style="margin: 0">
+                                            <button class="btn btn-dark" id="printButton">
+                                                Print !
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <hr style="width: 100%; margin-top: 25px;"/>
+                            </div>
+                        </div>
+                        <div class="col-12 sm-hide" style="padding: 0; height: 5vh">
+                            <div class="row" style="width: 100%; margin-left: 0em; height: 100%">
+                                <img class="fancyRip"  src="{{ url_for('static',filename='images/rip.png') }}" style="margin-top: -1px; object-fit:none; object-position: top; width:110%; height:auto;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-lg-3 col-md-2 sm-hide col-sm-1"></div>
+            </div>
+        </div>
+    </body>
+</html>

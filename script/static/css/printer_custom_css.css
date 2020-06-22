@@ -1,0 +1,141 @@
+.sm-hide {
+  display: flex; }
+
+#rootContainer {
+  height: 100vh;
+  background-color: #0000; }
+
+#rootContainer > .row > .col-12:first-child {
+  background-color: #f6f8c6; }
+
+#rootContainer > .row > .col-12:first-child > .row {
+  padding-left: 2em;
+  padding-right: 2em; }
+
+#rootContainer > .row > .col-12 > .row > div {
+  padding-left: 0;
+  padding-right: 0;
+  vertical-align: middle; }
+
+#mainTitle {
+  width: 100%;
+  margin: 2px;
+  margin-top: 0px;
+  text-align: center;
+  color: black; }
+
+#mainTitle > h1 {
+  margin: auto;
+  font-family: Clarendon;
+  font-weight: bold;
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* IE10+/Edge */
+  user-select: none;
+  /* Standard */ }
+
+@media (max-width: 340px) {
+  #mainTitle > h1 {
+    font-size: 2rem; } }
+hr {
+  border-top: dotted 3px;
+  margin-top: 0.4rem;
+  margin-bottom: 1rem; }
+
+#fileBrowser {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%; }
+
+#fileBrowser > div > label {
+  margin: 0;
+  width: 100%; }
+
+#photoFrame > div {
+  border: dotted;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2em;
+  position: relative;
+  width: 100%;
+  padding-top: 125%; }
+
+#photoFrame > div > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80%;
+  text-align: center; }
+
+@media (max-width: 340px) {
+  #photoFrame > div > div {
+    font-size: 65%; } }
+#photoContainer {
+  width: 80%;
+  align-self: flex-start;
+  flex: 1;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin: auto; }
+
+#textInput {
+  border-radius: 0;
+  border-top-left-radius: 0.25rem;
+  border-bottom-left-radius: 0.25rem;
+  height: 100%; }
+
+#printOptions > div > button, #printOptions > div > div > button {
+  border-radius: 0; }
+
+#printOptions > div:first-child > button {
+  border-radius: 0;
+  border-top-right-radius: 0.25rem; }
+
+.blank-space {
+  height: 175px;
+  width: 100%;
+  background-color: #2a3032;
+  padding-left: 15px;
+  padding-right: 15px; }
+
+#printButton {
+  border-radius: 0;
+  border-bottom-right-radius: 0.25rem;
+  width: 100%;
+  font-weight: bold; }
+
+@media (max-width: 576px) {
+  #rootContainer {
+    background-color: #f6f8c6; }
+
+  .col-lapse {
+    height: 200px; }
+
+  #textInput {
+    border-radius: 0;
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem; }
+
+  #printOptions > div:first-child > button {
+    border-radius: 0; }
+
+  #printButton {
+    border-radius: 0;
+    border-bottom-right-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem; }
+
+  .blank-space {
+    height: 75px; }
+
+  .sm-hide {
+    display: none; } }
+.slider {
+  display: inline-block; }
+
+/*# sourceMappingURL=printer_custom_css.css.map */
