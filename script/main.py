@@ -5,9 +5,9 @@ from urllib.parse import unquote
 import json
 import os
 
-LATE_COMMAND_DIR_PATH = Path(".").absolute().parent.joinpath("printcmd_queue")
+LATE_COMMAND_DIR_PATH = Path(".").absolute().joinpath("printcmd_queue")
 if not LATE_COMMAND_DIR_PATH.is_dir():
-    os.mkdir("..\\printcmd_queue")
+    os.mkdir("printcmd_queue")
 app = Flask(__name__)
 printer = Printer(LATE_COMMAND_DIR_PATH)
 
