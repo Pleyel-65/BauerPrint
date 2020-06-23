@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 Restart=on-failure
 RestartSec=3
-ExecStart="bash /home/pi/Bauer_Print/launchServer.sh"
+ExecStart="/home/pi/BauerPrint/launchServer.sh"
 
 [Install]
 WantedBy=multi-user.target
