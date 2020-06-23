@@ -1,11 +1,13 @@
-from home_printer.printer_model import *
-from home_printer.image_raster import *
+from Home_Printer.home_printer.printer_model import *
+from Home_Printer.home_printer.image_raster import *
 from flask import Flask, request, render_template, jsonify
 from urllib.parse import unquote
 import json
+import os
 
 LATE_COMMAND_DIR_PATH = Path(".").absolute().parent.joinpath("printcmd_queue")
-
+if not LATE_COMMAND_DIR_PATH.is_dir():
+    os.mkdir("..\\printcmd_queue")
 app = Flask(__name__)
 printer = Printer(LATE_COMMAND_DIR_PATH)
 

@@ -1,9 +1,6 @@
 .sm-hide {
     display: flex;
 }
-@media (max-width: 576px) {
-
-}
 
 #rootContainer {
     height: 100vh;
@@ -122,7 +119,7 @@ hr {
     font-weight: bold;
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) {
     #rootContainer {
         background-color: #f6f8c6;
     }

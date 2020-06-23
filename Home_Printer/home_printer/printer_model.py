@@ -5,7 +5,7 @@ import time
 import os
 from pathlib import Path
 
-
+# Weird characters
 utf2pos_map = {
     b"\xc3\x87": b"\x80",
     b"\xc3\xbc": b"\x81",
