@@ -1,3 +1,5 @@
 #!/bin/bash
-
-venv/bin/python3 script/main.py
+SCRIPT=$(readlink -f $0)
+SCRIPTPATH=`dirname $SCRIPT`
+cd $SCRIPTPATH
+venv/bin/python3 $SCRIPTPATH script/main.py
