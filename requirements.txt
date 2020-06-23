@@ -1,6 +1,6 @@
 click==7.1.2
 Flask==1.1.2
--e git+https://github.com/Pleyel-65/BauerPrint.git@526fc0febd9e9fe4dedc2c97b80c9f3bd2e4df83#egg=Home_Printer&subdirectory=home_printer
+-e Home_Printer
 itsdangerous==1.1.0
 Jinja2==2.11.2
 MarkupSafe==1.1.1
