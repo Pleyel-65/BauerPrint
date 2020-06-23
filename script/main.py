@@ -1,5 +1,5 @@
-from Home_Printer.home_printer.printer_model import *
-from Home_Printer.home_printer.image_raster import *
+from home_printer.printer_model import *
+from home_printer.image_raster import *
 from flask import Flask, request, render_template, jsonify
 from urllib.parse import unquote
 import json

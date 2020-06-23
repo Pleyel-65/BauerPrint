@@ -1,0 +1,12 @@
+[Unit]
+Description=Thermal Printer at home
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=3
+ExecStart=/home/pi/Bauer_Print/launchServer.sh
+
+[Install]
+WantedBy=multi-user.target
