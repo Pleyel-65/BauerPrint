@@ -86,11 +86,6 @@ hr {
   text-align: center;
 }
 
-@media (max-width: 340px) {
-  #photoFrame > div > div {
-    font-size: 65%;
-  }
-}
 #photoContainer {
   width: 80%;
   align-self: flex-start;
@@ -163,6 +158,10 @@ hr {
 
   .sm-hide {
     display: none;
+  }
+
+  #photoFrame > div > div {
+    font-size: 65%;
   }
 }
 .slider {
