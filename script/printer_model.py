@@ -1,10 +1,13 @@
+import re
 import datetime
 import re
 import subprocess
 import time
 import os
 from pathlib import Path
-
+import serial
+from serial import Serial
+import serial.tools.list_ports
 # Weird characters
 utf2pos_map = {
     b"\xc3\x87": b"\x80",
@@ -43,13 +46,15 @@ class Printer:
 
     def __reset_printer(self, output_file: Path, check_dir=None):
         # Set baud rate
-        subprocess.run('stty -F "' + output_file.as_posix() + '" 115200 raw -echo', shell=True)
+        # subprocess.run('stty -F "' + output_file.as_posix() + '" 115200 raw -echo', shell=True)
         # Initiate printer
-        with open(output_file.as_posix(), "wb") as output:
-            self.set_mode(output, font_mode=0, justification=0, font_size=12)
-            # Dump waiting commands if any
-            if isinstance(check_dir, Path):
-                self.__print_queued_commands_from_files(output, check_dir)
+        # with open(output_file.as_posix(), "wb") as output:
+        #     self.set_mode(output, font_mode=0, justification=0, font_size=12)
+        #     # Dump waiting commands if any
+        #     if isinstance(check_dir, Path):
+        #         self.__print_queued_commands_from_files(output, check_dir)
+
+        self.set_mode(output_file, font_mode=0, justification=0, font_size=12 )
 
     def __print_queued_commands_from_files(self, output, dir_path: Path):
         if self.printer_connected:
@@ -61,18 +66,24 @@ class Printer:
                     os.unlink(cmd_file)
 
     def get_output(self, check_dir=None):
-        output_file = Path("/dev/null")
+        # output_file = Path("/dev/null")
         # Check for ttyUSBs
-        for i in range(9):
-            if Path("/dev/ttyUSB%1d" % i).is_char_device():
-                output_file = Path("/dev/ttyUSB%1d" % i)
-                # If reconnect
-                if not self.printer_connected:
-                    self.printer_connected = True
-                    self.__reset_printer(output_file, check_dir)
-                break
+        # for i in range(9):
+        #     print("hello")
+        #     print(['COM%s' % (i + 1) for i in range(256)])
+            # return result
+            # if Path("/dev/ttyUSB%1d" % i).is_char_device():
+            #     output_file = Path("/dev/ttyUSB%1d" % i)
+            #     # If reconnect
+            #     if not self.printer_connected:
+            #         self.printer_connected = True
+            #         self.__reset_printer(output_file, check_dir)
+            #     break
         # Redirect output to printcmd files
-        if output_file.as_posix() == "/dev/null":
+        ports = list( serial.tools.list_ports.comports() )
+        port = [p for p in ports if p.description.startswith("Prolific USB-to-Serial Comm Port")]
+        if len(port) == 0:
+        # if output_file.as_posix() == "/dev/null":
             self.printer_connected = False
             # Make filename
             y, m, d = str(datetime.date.today().year), str(datetime.date.today().month), str(datetime.date.today().day)
@@ -81,6 +92,10 @@ class Printer:
             # Write in file if directory is specified
             if isinstance(check_dir, Path):
                 output_file = check_dir.joinpath(filename)
+        else:
+            output_file = Serial(port[0].device, 115200)
+            self.printer_connected == True
+            self.__reset_printer(output_file)
 
         return output_file
 
@@ -155,3 +170,10 @@ class Printer:
         output.write(b"\n\n")
         output.write(b"\x1d\x76\x30\x00" + image)
         output.write(b"\n\n")
+
+
+if __name__ == "__main__":
+    ports = list( serial.tools.list_ports.comports() )
+    port = [p for p in ports if p.description.startswith("Prolific USB-to-Serial Comm Port")][0]
+    print(int(re.search(r'\d+', port.device)[0]))
+    

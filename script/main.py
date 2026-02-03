@@ -1,5 +1,5 @@
-from home_printer.printer_model import *
-from home_printer.image_raster import *
+from printer_model import *
+from image_raster import *
 from flask import Flask, request, render_template, jsonify
 from urllib.parse import unquote
 import json
@@ -8,7 +8,7 @@ import os
 LATE_COMMAND_DIR_PATH = Path(".").absolute().joinpath("printcmd_queue")
 if not LATE_COMMAND_DIR_PATH.is_dir():
     os.mkdir("printcmd_queue")
-app = Flask(__name__)
+app = Flask(__name__) 
 printer = Printer(LATE_COMMAND_DIR_PATH)
 
 
@@ -29,12 +29,13 @@ def index():
 @app.route("/print", methods=['POST'])
 def print_thermal():
     payload = parse_request(request)
-    output = printer.get_output(LATE_COMMAND_DIR_PATH)
+    # output = printer.get_output(LATE_COMMAND_DIR_PATH)
+    output_io = printer.get_output(LATE_COMMAND_DIR_PATH)
 
-    if output.is_char_device():
-        output_io = open(output.as_posix(), "wb")
-    else:
-        output_io = open(output.as_posix(), "ab")
+    # if output.is_char_device():
+    #     output_io = open(output.as_posix(), "wb")
+    # else:
+    #     output_io = open(output.as_posix(), "ab")
 
     if "set" in payload.keys():
         if "font_mode" in payload["set"].keys():
