@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageOps, ImageEnhance
 import base64
 import io
 
@@ -40,12 +40,29 @@ class ThermalPrinterImage:
             ratio = 392 / self.image.width
             self.image = self.image.resize((392, int(self.image.height * ratio)))
 
+    @staticmethod
+    def __operate_on_image(v):
+        plus = 255 - v
+        v = (pow(1-v/255, 10) * plus * 0.1 + v)*1.2
+        return max(0, min(255, int(v)))
+
     def __black_white(self):
+        self.image = self.image.convert(mode="L")
+        sharpness = ImageEnhance.Sharpness(self.image)
+        self.image = sharpness.enhance(10)
+        self.image = ImageOps.autocontrast(self.image, (0,5))
+        self.image = self.image.point(ThermalPrinterImage.__operate_on_image)
         self.image = self.image.convert(mode="1")
+
 
     @staticmethod
     def from_html_base64(html_base64):
         html_base64 = html_base64[html_base64.find("base64") + len("base64,"):]
-        html_base64 = base64.b64decode(html_base64)
-        buf = io.BytesIO(html_base64)
+        return ThermalPrinterImage.from_base64(html_base64)
+
+    @staticmethod
+    def from_base64(base_64):
+        base_64 = base64.b64decode(base_64)
+        buf = io.BytesIO(base_64)
         return ThermalPrinterImage(buf)
+    
