@@ -1,6 +1,6 @@
 *.session
 *.jpg
-secrets.py
+my_secret_keys.py
 # Byte-compiled / optimized / DLL files
 printcmd_queue/
 __pycache__/
