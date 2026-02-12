@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 Restart=on-failure
 RestartSec=3
-ExecStart="/home/facks/Desktop/BauerPrint/launchFlaskServer.sh"
+ExecStart="/home/facks/Desktop/BauerPrint/launchTelegramClient.sh"
 
 [Install]
 WantedBy=multi-user.target

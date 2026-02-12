@@ -1,6 +1,8 @@
 *.session
 *.jpg
 my_secret_keys.py
+menage.txt
+anonymous_users.json
 # Byte-compiled / optimized / DLL files
 printcmd_queue/
 __pycache__/

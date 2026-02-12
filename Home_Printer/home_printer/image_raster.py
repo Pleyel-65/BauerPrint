@@ -1,7 +1,8 @@
+import numpy as np
 from PIL import Image, ImageOps, ImageEnhance
 import base64
 import io
-
+from functools import partial
 
 class ThermalPrinterImage:
     def __init__(self, file):
@@ -41,9 +42,11 @@ class ThermalPrinterImage:
             self.image = self.image.resize((392, int(self.image.height * ratio)))
 
     @staticmethod
-    def __operate_on_image(v):
+    def __operate_on_image(v, mean_val):
         plus = 255 - v
-        v = (pow(1-v/255, 10) * plus * 0.1 + v)*1.2
+        mean_val = max(180, mean_val)
+        brighten = 180/mean_val
+        v = (pow(1-v/255, 10) * plus * 0.1 + v)*brighten
         return max(0, min(255, int(v)))
 
     def __black_white(self):
@@ -51,7 +54,8 @@ class ThermalPrinterImage:
         sharpness = ImageEnhance.Sharpness(self.image)
         self.image = sharpness.enhance(10)
         self.image = ImageOps.autocontrast(self.image, (0,5))
-        self.image = self.image.point(ThermalPrinterImage.__operate_on_image)
+        operate = partial(ThermalPrinterImage.__operate_on_image, mean_val=np.average(np.array(self.image)))
+        self.image = self.image.point(operate)
         self.image = self.image.convert(mode="1")
 
 

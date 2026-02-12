@@ -126,6 +126,8 @@ class Printer:
 
     @staticmethod
     def text(output, string: str):
+        string = re.sub(r'[’]', "'", string)
+        string = re.sub(r'[”“]', "'", string)
         output.write(Printer.__utf_to_escpos(Printer.wrap(string).encode("utf-8")))
         output.write(b"\n")
 
