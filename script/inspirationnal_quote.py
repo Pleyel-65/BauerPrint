@@ -28,7 +28,7 @@ def getQuote():
     change_to_som = re.compile("(?i)\\b({})\\b".format(words_to_som))
     quote = re.sub(change_to_som, "Som", quote)
 
-    quote = re.sub(r'(?i)\byour\b', "Som's", quote)
+    quote = re.sub(r"(?i)\b(your|my|his|hers)\b", "Som's", quote)
     return quote
 
 def printOutQuote(output_io, msg):

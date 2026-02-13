@@ -1,5 +1,6 @@
 import json
 from telethon import TelegramClient, events, functions, types
+from telethon.tl.custom.button import Button
 from my_secret_keys import *
 from PIL import Image
 import io
@@ -16,6 +17,7 @@ import logging
 import asyncio
 from menage_nyass import getMenageCandidates, printOutMenage
 from inspirationnal_quote import getQuote
+from shopping_list import *
 import random
 import sys
 
@@ -115,6 +117,39 @@ def noAscii(event):
 client = TelegramClient('FACKS-bot', api_id=api_id, api_hash=api_hash)
 # LATE_COMMAND_DIR_PATH = Path(".").absolute().joinpath("printcmd_queue")
 # IMG_PATH = Path(".").absolute().joinpath("replace_me")
+async def add_shopping_main(event):
+    has_matched = re.match(r'/add_shopping', event.raw_text)
+    if has_matched:
+        elems = getShoppingList()
+        shopping_list = "\n- ".join(elems)
+        str_list = "Current shopping list :\n\n- {}".format(shopping_list) if len(elems) > 0 else "Shopping list is currently empty.."
+        await client.send_message(event.chat, str_list)
+        asyncio.create_task(event.respond("What should I add to the list ?", buttons=Button.force_reply("some_random_text")))
+    return has_matched
+    
+async def add_shopping_list(event):
+    if not event.reply_to:
+        return False
+    replied = await client.get_messages(event.chat, ids=event.reply_to.reply_to_msg_id)
+    logger.info(replied.raw_text)
+    has_matched = event.reply_to and replied.raw_text == "What should I add to the list ?"
+    if has_matched:
+        asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='✍️')])))
+        addToList(re.sub(r'\n', ' ', event.raw_text))
+    return has_matched
+
+def print_shopping(event, output_io):
+    has_matched = re.match(r'/print_shopping', event.raw_text)
+    if has_matched:
+        if len(getShoppingList()) > 0:
+            printShoppingList(output_io)
+            eraseShoppingList()
+            endPrint(output_io)
+            asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='👌')])))
+        else:
+            asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='🤔')])))
+    return has_matched
+
 def monkey(event):
     if re.match(r'(?im).*[🙊🙈🙉🦍🦧🦥]', event.raw_text):
         
@@ -143,6 +178,10 @@ async def handler(event):
         return
     if monkey(event):
         return
+    if await add_shopping_main(event):
+        return
+    if await add_shopping_list(event):
+        return
     is_anonymous, has_changed = changeAnonymous(event)
     if has_changed:
         return
@@ -153,6 +192,8 @@ async def handler(event):
     else:
         output_io = open(output.as_posix(), "ab")
 
+    if print_shopping(event, output_io):
+        return
     if noAscii(event):
         return
 

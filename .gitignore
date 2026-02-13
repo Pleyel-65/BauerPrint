@@ -2,6 +2,7 @@
 *.jpg
 my_secret_keys.py
 menage.txt
+shopping_list.txt
 anonymous_users.json
 # Byte-compiled / optimized / DLL files
 printcmd_queue/
