@@ -3,7 +3,8 @@
 my_secret_keys.py
 menage.txt
 shopping_list.txt
-anonymous_users.json
+user_data.json
+inspiquote.txt
 # Byte-compiled / optimized / DLL files
 printcmd_queue/
 __pycache__/

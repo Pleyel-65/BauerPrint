@@ -10,8 +10,12 @@ if not SHOPPINGLIST_PATH.is_file():
 def addToList(elem):
     if not elem or elem in ('', '\n'):
         return 
+    
     c_list = getShoppingList()
-    if any([re.match(re.compile(elem+"$", flags=re.IGNORECASE), c) for c in c_list]):
+    elem = list(re.sub(r'^\s+', '', elem))
+    elem[0] = elem[0].upper()
+    elem = re.sub(r'\s+$', '', ''.join(elem))
+    if any([re.match(re.compile(re.sub(r'[sx]$', '', elem)+"[sx]?$", flags=re.IGNORECASE), c) for c in c_list] + [re.match(r'^/', elem)]):
         return
 
     with open(SHOPPINGLIST_PATH, "a") as f:
