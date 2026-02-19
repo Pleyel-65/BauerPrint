@@ -6,16 +6,26 @@ from functools import partial
 
 class ThermalPrinterImage:
     def __init__(self, file):
+        # self.file = open(file, "rb")
         self.image = Image.open(file)
 
         self.__choose_rotate()
         self.__resize()
         self.__black_white()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.image.close()
+        # self.file.close()
+        return True
+
     def get_byte_image(self):
         byte = 0
         dot_image = []
         # True is dot for printer
+        # print(list(self.image.getdata()))
         for i, bit in enumerate(list(self.image.getdata())):
             byte <<= 1
             if bit == 0:
@@ -24,13 +34,16 @@ class ThermalPrinterImage:
                 dot_image.append(byte)
                 byte = 0
 
-        xl = int((self.image.width / 8) % 256)
-        xh = int(self.image.width / 2048)
+        
+        xl = int((self.image.width // 8) % 256)
+        xh = int(self.image.width // 2048)
         yl = int(self.image.height % 256)
-        yh = int(self.image.height / 256)
+        yh = int(self.image.height // 256)
 
+
+        # print((xh * 256 * 8 + xl)*(yh * 256 + yl))
         # Conform to [GS, v, 0, xl, xh, yl, yh, d0, d1 ... dk] command in ESC/POS
-        return bytes([xl, xh, yl, yh]) + bytes(dot_image)
+        return bytes([xl, xh, yl, yh]) + bytes(dot_image[:(xh * 256 * 8 + xl)*(yh * 256 + yl)])#.replace(b'\x1b\x53', b'\x00\x53')
 
     def __choose_rotate(self):
         if self.image.width > self.image.height:
@@ -44,9 +57,13 @@ class ThermalPrinterImage:
     @staticmethod
     def __operate_on_image(v, mean_val):
         plus = 255 - v
-        mean_val = max(180, mean_val)
+        # print(f'pls: {plus}     mean: {mean_val}  v: {v}')
+        mean_val = min(180, mean_val)
+        # print(f'pls: {plus}     mean: {mean_val}  v: {v}')
         brighten = 180/mean_val
+        # print(f'pls: {plus}     mean: {mean_val}  bright: {brighten} v: {v}')
         v = (pow(1-v/255, 10) * plus * 0.1 + v)*brighten
+        # print(f'pls: {plus}     mean: {mean_val}  bright: {brighten} v: {v}')
         return max(0, min(255, int(v)))
 
     def __black_white(self):
@@ -70,3 +87,9 @@ class ThermalPrinterImage:
         buf = io.BytesIO(base_64)
         return ThermalPrinterImage(buf)
     
+if __name__ == "__main__":
+    with ThermalPrinterImage("./replace_me.jpeg") as img:
+        img.image.save("./replaced.jpeg")
+        # with open("replace.jpg", "wb") as n_img:
+        #     n_img.write()
+        

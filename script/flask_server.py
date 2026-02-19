@@ -45,8 +45,8 @@ def print_thermal():
             printer.set_mode(output_io, font_size=payload["set"]["font_size"])
 
     if "image" in payload.keys():
-        img = ThermalPrinterImage.from_html_base64(payload["image"])
-        printer.image(output_io, img.get_byte_image())
+        with ThermalPrinterImage.from_html_base64(payload["image"]) as img:
+            printer.image(output_io, img.get_byte_image())
 
     if "text" in payload.keys():
         printer.text(output_io, payload["text"])

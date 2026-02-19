@@ -28,9 +28,9 @@ def printOutMenage(output_io, msg):
     printer.text(output_io, possible_titles[random.randint(1, len(possible_titles)) - 1])
     img_files = listdir(MEME_PATH)
     img_path = MEME_PATH.joinpath(img_files[random.randint(1, len(img_files)) - 1])
-    with open(img_path, "rb") as img_file:
-            img = ThermalPrinterImage(img_file)
-            printer.image(output_io, img.get_byte_image())
+    # with open(img_path, "rb") as img_file:
+    with ThermalPrinterImage(img_path) as img:
+        printer.image(output_io, img.get_byte_image())
     printer.set_mode(output_io, font_mode=0, font_size=12, justification=0)
     printer.text(output_io, msg)
     for _ in range(5):

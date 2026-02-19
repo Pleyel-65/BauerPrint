@@ -4,7 +4,7 @@ import subprocess
 import time
 import os
 from pathlib import Path
-
+# from image_raster import ThermalPrinterImage
 # Weird characters
 utf2pos_map = {
     b"\xc3\x87": b"\x80",
@@ -32,8 +32,12 @@ utf2pos_map = {
     b"\xc3\xa1": b"\xa0",
     b"\xc3\xad": b"\xa1",
     b"\xc3\xb3": b"\xa2",
-    b"\xc3\xba": b"\xa3"
+    b"\xc3\xba": b"\xa3",
 }
+# Does this get rid of image bugs ?
+# buggy_img_char = {
+#     b"\x03\xc2\xbf\x03" : b"\x03\xc3\x80\x03"
+# }
 
 
 class Printer:
@@ -108,9 +112,15 @@ class Printer:
 
     @staticmethod
     def __utf_to_escpos(cmd_bytes: bytes):
-        for key in utf2pos_map:
-            cmd_bytes = cmd_bytes.replace(key, utf2pos_map[key])
+        for key, value in utf2pos_map.items():
+            cmd_bytes = cmd_bytes.replace(key, value)
         return cmd_bytes
+
+    # @staticmethod
+    # def __correct_image_bytes(cmd_bytes: bytes):
+    #     for key, value in buggy_img_char.items():
+    #         cmd_bytes = cmd_bytes.replace(key, value)
+    #     return cmd_bytes
 
     @staticmethod
     def set_mode(output, font_mode=None, justification=None, font_size=None):
@@ -142,7 +152,7 @@ class Printer:
         """
         Image must be a byte array with first four bytes being :
         
-          xLowByte = int((img.width % 256) / 8)
+          xLowByte = int((img.width / 8) % 256)
           xHighByte = int(img.width / 2048)
           yLowByte = int(img.height % 256)
           yHighByte = int(img.height / 256)
@@ -155,5 +165,35 @@ class Printer:
         if not isinstance(image, bytes):
             raise TypeError("Oops... image must be byte array")
         output.write(b"\n\n")
+        output.flush()
         output.write(b"\x1d\x76\x30\x00" + image)
+        output.flush()
         output.write(b"\n\n")
+
+
+if __name__ == "__main__":
+    with ThermalPrinterImage("../../replace_me.jpeg") as fckimg:
+        # with ThermalPrinterImage("../../working_replace_me.jpeg") as img:
+        # fckimg = ThermalPrinterImage("../../replace_me.jpeg")
+        byte_fckimg: bytearray = bytearray(fckimg.get_byte_image())
+        print(byte_fckimg)
+        # img = ThermalPrinterImage("../../working_replace_me.jpeg")
+        # byte_img: bytes = img.get_byte_image()
+        check_byte_code = [b'\x1b\x53', b'\x1b\x3c',b'\x1b\x4c']
+        for cbc in check_byte_code:
+            print(f'{" ".join([hex(c) for c in cbc])} : ')
+            if cbc in byte_fckimg:
+                # print("hello")
+                print(f"{byte_fckimg.index(cbc)}")
+
+
+    # print(" ".join(hex(n) for n in byte_fckimg[14:24]))
+    # for i, (b1, b2) in enumerate(zip(byte_fckimg, byte_img)):
+    #     if b1 == 128:
+    #         print(f"fucked byte at index {i} is 128")
+    #     if b2 == 128:
+    #         print(f"byte at index {i} is 128")
+    #         time.sleep(0.5)
+            
+
+    # print(byte_fckimg == byte_img)
