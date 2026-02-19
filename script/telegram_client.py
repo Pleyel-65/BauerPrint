@@ -143,8 +143,9 @@ def noAscii(event):
     has_matched = len(forbidden_char) > 0
     if has_matched:
         asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='😢')])))
-        asyncio.create_task(client.send_message(event.chat, "申し訳ございませんが、その「{}]の字を印刷出来ません".format(", ".join(forbidden_char)), buttons=Button.clear()))
-    return has_matched
+        asyncio.create_task(client.send_message(event.chat, "申し訳ございませんが、その「{}」の字を印刷出来ません".format(", ".join(forbidden_char)), buttons=Button.clear()))
+    event.raw_text = re.sub(r'[^\x20-\xFF\r\n]', '', event.raw_text)
+    return False
 
 
 async def add_shopping_main(event, user_data):
@@ -239,7 +240,8 @@ def convertImageToJPG(fp: Path):
         os.system(f'''ffmpeg -i {fp} -vf "format=yuva444p,geq='if(lte(alpha(X,Y),1),255,p(X,Y))':'if(lte(alpha(X,Y),1),128,p(X,Y))':'if(lte(alpha(X,Y),1),128,p(X,Y))'" {new_file_name}''')
         os.remove(fp)
     else:
-        fp.rename(new_file_name)
+        os.system(f'''ffmpeg -i {fp} {new_file_name}''')
+        # fp.rename(new_file_name)
 
 
     return Path(".").absolute().joinpath(new_file_name)
