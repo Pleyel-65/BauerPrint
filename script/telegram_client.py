@@ -238,10 +238,11 @@ def convertImageToJPG(fp: Path):
 
     if not fp.suffix in [".jpg", ".jpeg"]:
         os.system(f'''ffmpeg -i {fp} -vf "format=yuva444p,geq='if(lte(alpha(X,Y),1),255,p(X,Y))':'if(lte(alpha(X,Y),1),128,p(X,Y))':'if(lte(alpha(X,Y),1),128,p(X,Y))'" {new_file_name}''')
-        os.remove(fp)
+        # os.remove(fp)
     else:
         os.system(f'''ffmpeg -i {fp} {new_file_name}''')
         # fp.rename(new_file_name)
+    os.remove(fp)
 
 
     return Path(".").absolute().joinpath(new_file_name)
