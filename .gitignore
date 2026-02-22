@@ -1,6 +1,7 @@
 *.session
 *.jpg
 *.jpeg
+sounds
 my_secret_keys.py
 menage.txt
 shopping_list.txt

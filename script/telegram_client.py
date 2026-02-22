@@ -20,6 +20,7 @@ from inspirationnal_quote import readLastQuote, writeNextQuote
 from shopping_list import *
 import random
 import sys
+from voicemail import Phone, NEW_MESSAGES_FOLDER, OLD_MESSAGES_FOLDER
 
 now_time = ""
 now_date = ""
@@ -240,7 +241,7 @@ def convertImageToJPG(fp: Path):
         os.system(f'''ffmpeg -i {fp} -vf "format=yuva444p,geq='if(lte(alpha(X,Y),1),255,p(X,Y))':'if(lte(alpha(X,Y),1),128,p(X,Y))':'if(lte(alpha(X,Y),1),128,p(X,Y))'" {new_file_name}''')
         # os.remove(fp)
     else:
-        os.system(f'''ffmpeg -i {fp} {new_file_name}''')
+        os.system(f'''ffmpeg -i {fp} -pix_fmt yuv444p {new_file_name}''')
         # fp.rename(new_file_name)
     os.remove(fp)
 
@@ -257,7 +258,199 @@ def printImageToFile(byte_img: bytes):
     c_ind = len(os.listdir("../byte_imgs"))
     with open(f"../byte_imgs/byte_img_{str(c_ind).zfill(3)}", "wb") as f:
         f.write(byte_img)
-@client.on(events.NewMessage())
+
+def addBeer(event, user_data):
+    has_matched = re.match(r'/add_beer', event.raw_text)
+    if not has_matched:
+        return has_matched, user_data
+    
+    beer_data = user_data["beers"]
+    if not str(event.sender_id) in beer_data:
+        beer_data[str(event.sender_id)] = 0
+    beer_data[str(event.sender_id)] += 1
+
+    match beer_data[str(event.sender_id)]:
+        case 1:
+            suffix = "st"
+        case 2:
+            suffix = "nd"
+        case 3:
+            suffix = "rd"
+        case _:
+            suffix = "th"
+    if beer_data[str(event.sender_id)] < 20:
+        asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='🍾')])))
+    else:
+        asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='🤮')])))
+    asyncio.create_task(client.send_message(event.chat, f"Enjoy your {beer_data[str(event.sender_id)]}{suffix} beer !", buttons=Button.clear()))
+
+    user_data["beers"] = beer_data
+    return has_matched, user_data
+
+async def printBeerTotal(event, output_io, user_data):
+    has_matched = re.match(r'/print_beer', event.raw_text)
+    if has_matched and not checkPriviliges(event, user_data):
+        asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='👎')])))
+        asyncio.create_task(client.send_message(event.chat, "Functionality reserved to members of sharehouse", buttons=Button.clear()))
+        return has_matched, user_data
+
+    if not has_matched or len(user_data["beers"].keys()) == 0:
+        return has_matched, user_data
+    
+    printer.cut(output_io)
+    printer.set_mode(output_io, font_mode=25, font_size=20, justification=0)
+    printer.text(output_io, "Concours de Pochtron")
+    printer.set_mode(output_io, font_mode=0, font_size=12)
+    printer.text(output_io, "\n")
+    for id, beer_count in user_data["beers"].items():
+        user = await client.get_entity(int(id))
+        if user.first_name:
+            l_name = "" if not user.last_name else " " + user.last_name
+            user_name = user.first_name + l_name
+        elif user.username:
+            user_name = user.username
+        elif user.last_name:
+            user_name = user.last_name
+        else:
+            user_name = str(id)
+        printer.text(output_io, f"{user_name}: {beer_count}")
+    printer.text(output_io, "\n")
+    printer.cut(output_io)
+    endPrint(output_io)
+
+    asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='🤝')])))
+    user_data["beers"] = {}
+    return has_matched, user_data
+
+def silent_voicemail(event, user_data):
+    has_matched = re.match(r'/silent_voicemail', event.raw_text)
+    if has_matched:
+        if not checkPriviliges(event, user_data):
+            asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='👎')])))
+            asyncio.create_task(client.send_message(event.chat, "You are not concerned by the noise that the voicemail makes", buttons=Button.clear()))
+            return has_matched, user_data
+        mode = not user_data["silent_voicemail"]
+        user_data["silent_voicemail"] = mode
+        if mode:
+            asyncio.create_task(client.send_message(event.chat, "☎️ No more getting woken up on the couch ☎️", buttons=Button.clear()))
+        else:
+            asyncio.create_task(client.send_message(event.chat, "📞 Loud mode activated ! 📞", buttons=Button.clear()))
+    return has_matched, user_data
+
+
+
+
+async def unreadMessage(event, user_data):
+    has_matched = re.match(r'/unread_voicemail', event.raw_text)
+    if has_matched:
+        if not checkPriviliges(event, user_data):
+            asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='👎')])))
+            asyncio.create_task(client.send_message(event.chat, "Functionality reserved to members of sharehouse", buttons=Button.clear()))
+            return has_matched  
+        msgs = os.listdir(OLD_MESSAGES_FOLDER)
+        if not msgs:
+            asyncio.create_task(client.send_message(event.chat, "No voicemail...", buttons=Button.clear()))
+            return has_matched  
+        msg_buttons = []
+        for m in msgs:
+            receive_date = datetime.strptime(re.search(r'\d{4}([_|-]\d{2}){5}', Path(m).stem).group(0), "%Y-%m-%d_%H-%M-%S")
+            id = re.search(r'\d+(?=(.mp3|.oga)?$)', m).group(0)
+            logger.info(id)
+            if id != "0":
+                user = await client.get_entity(int(id))
+                if user.first_name:
+                    l_name = "" if not user.last_name else " " + user.last_name
+                    user_name = user.first_name + l_name
+                elif user.username:
+                    user_name = user.username
+                elif user.last_name:
+                    user_name = user.last_name
+                else:
+                    user_name = str(id)
+            else: 
+                user_name = "???"
+            msg_buttons.append(f"{user_name} {receive_date.strftime("%d/%m/%y %H:%M:%S")}")
+
+
+        asyncio.create_task(client.send_message(event.sender_id, "What message do you whish to unread ?", buttons=[[Button.inline(msg, f'unread {msgs[i]}')] for i, msg in enumerate(msg_buttons)]+[[Button.inline("Cancel", "unread none")]]))
+
+    return has_matched
+
+def deleteMessages(event, user_data):
+    has_matched = re.match(r'/delete_voicemail', event.raw_text)
+    if has_matched:
+        if not checkPriviliges(event, user_data):
+            asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='👎')])))
+            asyncio.create_task(client.send_message(event.chat, "Functionality reserved to members of sharehouse", buttons=Button.clear()))
+            return has_matched
+        if not os.listdir(OLD_MESSAGES_FOLDER):
+            asyncio.create_task(client.send_message(event.chat, "No voicemail...", buttons=Button.clear()))
+            return has_matched
+        counts = [0] * 10
+        now = datetime.now()
+        lim_dates = [now - timedelta(hours=1), now - timedelta(days=1), now - timedelta(weeks=1), now - timedelta(days=31)]
+        for msg_name in os.listdir(OLD_MESSAGES_FOLDER):
+            counts[-1] += 1
+            for i, lim in enumerate(lim_dates):
+                receive_date = datetime.strptime(re.search(r'\d{4}([_|-]\d{2}){5}', msg_name).group(0), "%Y-%m-%d_%H-%M-%S")  
+                if receive_date <= lim:
+                    counts[i+1] += 1
+                if receive_date >= lim:
+                    counts[i+5] += 1
+
+
+        msg_buttons = ["none", "older than an hour", "older than a day", "older than a week", "older than a month", "younger than an hour", "younger than a day", "younger than a week", "younger than a month", "all"]
+        asyncio.create_task(client.send_message(event.sender_id, "What messages do you wish to delete ?", buttons=[[Button.inline(f"{msg} ({counts[i]})",  f'delete {i}')] for i, msg in enumerate(msg_buttons)]))
+    return has_matched
+
+@client.on(events.CallbackQuery)
+async def handler(event):
+    phone = Phone()
+    request = str(event.data, 'utf-8')
+    logger.info(f"Got an order {request}")
+    try:
+        file_name = re.search(r'(?<=^(delete|unread) ).*$', request)[0]
+        # logger.info(f"Working on  {file_name}")
+        if re.match(r'unread', request):
+            if file_name != "none":
+                phone.unreadMessage(OLD_MESSAGES_FOLDER.joinpath(file_name))
+            # logger.info(f"Unread {file_name}")
+        elif re.match(r'delete', request):
+            before = datetime.min
+            after = datetime.max
+            match int(file_name):
+                case 1:
+                    before = datetime.now() - timedelta(hours=1)
+                case 2:
+                    before = datetime.now() - timedelta(days=1)
+                case 3:
+                    before = datetime.now() - timedelta(weeks=1)
+                case 4:
+                    before = datetime.now() - timedelta(days=30)
+                case 5:
+                    after = datetime.now() - timedelta(hours=1)
+                case 6:
+                    after = datetime.now() - timedelta(days=1)
+                case 7:
+                    after = datetime.now() - timedelta(weeks=1)
+                case 8:
+                    after = datetime.now() - timedelta(days=30)
+                case 9:
+                    before = datetime.max
+                    after = datetime.min
+            phone.removeMessage(before, after)
+            # logger.info(f"Deleted {file_name}")
+    except Exception as e:
+        raise e
+    finally:
+        await event.answer()
+        await event.delete()
+        return
+
+
+
+
+@client.on(events.NewMessage)
 #@client.on(events.NewMessage(chats = [-5259715117]))
 async def handler(event):
 
@@ -274,11 +467,17 @@ async def handler(event):
                    checkBan(event, u_d),
                    checkSpam(event, u_d), 
                    inspireMe(event),
-                   monkey(event)])
+                   monkey(event), 
+                   deleteMessages(event, u_d)])
+    # remove_message = await deleteMessages(event, u_d)
+    # unread = await unreadMessage(event, u_d)
     add_shopping_q =  await add_shopping_main(event, u_d)
     add_shopping_a =   await add_shopping_list(event, u_d)
+    unread =   await unreadMessage(event, u_d)
+    is_beer, u_d = addBeer(event, u_d)
+    silent_voicemail_changed, u_d = silent_voicemail(event, u_d)
     is_anonymous, anonymous_has_changed, u_d = changeAnonymous(event, u_d)
-    no_print = any([no_print, add_shopping_q, add_shopping_a, anonymous_has_changed])
+    no_print = any([no_print, add_shopping_q, add_shopping_a, anonymous_has_changed, is_beer, unread, silent_voicemail_changed])
     
     output = printer.get_output(LATE_COMMAND_DIR_PATH)
     if output.is_char_device():
@@ -290,9 +489,9 @@ async def handler(event):
                     noAscii(event), 
                     menageNyass(event, output_io, u_d), 
                     cutTicket(event, output_io, u_d)])
-
+    is_print_beer, u_d = await printBeerTotal(event, output_io, u_d)
     writeUserData(u_d)
-    if no_print:
+    if any([no_print, is_print_beer]):
         return
 
 
@@ -319,8 +518,8 @@ async def handler(event):
         img_name = Path(".").absolute().joinpath("downloaded_media")
         # if img_path.is_file():
         #     os.remove(img_path)
-        await event.download_media(str(img_name))
 
+        await event.download_media(str(img_name))
         # img_path = Path(glob.glob(str(img_name)+".*")[0])
         # if event.sticker:
         #     with open(img_path, "rb") as img_file:
@@ -334,6 +533,15 @@ async def handler(event):
         with ThermalPrinterImage(img_path) as img:    
             byte_img = img.get_byte_image()
             printer.image(output_io, byte_img)
+    # logger.info(event)
+    if event.voice:
+        f_name = f"{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_{event.sender_id if not is_anonymous else 0000000000}"
+        if u_d["silent_voicemail"]:
+            download_path = OLD_MESSAGES_FOLDER.joinpath(f_name)
+        else:
+            download_path = NEW_MESSAGES_FOLDER.joinpath(f_name)
+        await event.download_media(str(download_path))
+        event.raw_text = "New voicemail"
 
 
     printer.text(output_io, event.raw_text)
