@@ -6,15 +6,27 @@ Thermal printing at home. This program is meant to be used on a _RaspberryPi_ pl
 This repository contains the **`Home Printer`** package to interface with your thermal printer and a `flask` server launcher (see `script\main.py`).
 
 ### Installation notes
+- Please name the default user name on your raspberry to `facks` and clone this repo the raspberry's `Desktop`
 - On the Raspberry please install `sudo apt install libwebp-dev` 
-- Also please add a file named `/etc/asound.conf`
-- Don't forget to run `chmod +x launchFlaskServer.sh && && chmod +x launchTelegramClient.sh && chmod +x inspireSom.sh && chmod +x printMenageNyass.sh && sudo ln -s /home/pi/BauerPrint/bauerprint.service /etc/systemctl/system/bauerprint.service && sudo systemctl enable bauerprint.service && sudo ln -s /home/pi/BauerPrint/facks-machine.service /etc/systemctl/system/facks-machine.service && sudo systemctl enable facks-machine.service`, and add in `sudo crontab -e` :
-- ``` 
+- Also please add a file named `/etc/asound.conf` with
+    ```
+    defaults.pcm.card 1
+    defaults.ctl.card 1
+    ```  
+- In `sudo crontab -e` write at the end of the file:
+     ``` 
     48 2 * * 1 sh /home/facks/Desktop/BauerPrint/printMenageNyass.sh
     0 7 * * * sh /home/facks/Desktop/BauerPrint/inspireSom.sh
     30 3 * * 0,2,4,6  reboot
     @reboot sh /home/facks/Desktop/BauerPrint/voicemail.sh
     ```
+- Don't forget to run 
+     ```
+    cd ~/Desktop/BauerPrint && chmod +x launchFlaskServer.sh && && chmod +x launchTelegramClient.sh && chmod +x inspireSom.sh && chmod +x printMenageNyass.sh && chmod +x voicemail.sh
+    sudo cp /home/facks/BauerPrint/bauerprint.service /etc/systemctl/system/bauerprint.service &&  sudo cp /home/facks/BauerPrint/facks-machine.service /etc/systemctl/system/facks-machine.service
+    sudo systemctl enable bauerprint.service && sudo systemctl enable facks-machine.service
+    sudo reboot
+    ```  
 
 ### Development notes
 
