@@ -99,7 +99,7 @@ class Phone:
             logger.info(f"Hang state changed : {self.is_hung}")
 
 
-    def removeMessage(self, before: datetime = datetime.min, after: datetime = datetime.max):
+    def removeMessage(self, before: datetime = datetime.min, after: datetime = datetime.max, oldest=False, youngest=False):
         if self.old_messages:
             for msg_name in self.old_messages:
                 msg_abs_path = OLD_MESSAGES_FOLDER.joinpath(msg_name)
@@ -111,6 +111,11 @@ class Phone:
                     continue
                 if receive_date >= after:
                     os.remove(msg_abs_path)
+
+            if oldest:
+                os.remove(OLD_MESSAGES_FOLDER.joinpath(self.old_messages[0]))
+            if youngest:
+                os.remove(OLD_MESSAGES_FOLDER.joinpath(self.old_messages[-1]))
 
         if os.listdir(OLD_MESSAGES_FOLDER):
             self.old_messages = os.listdir(OLD_MESSAGES_FOLDER)

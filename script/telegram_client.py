@@ -21,6 +21,7 @@ from shopping_list import *
 import random
 import sys
 from voicemail import Phone, NEW_MESSAGES_FOLDER, OLD_MESSAGES_FOLDER
+import subprocess
 
 now_time = ""
 now_date = ""
@@ -253,6 +254,14 @@ def sendToSuperUser(event):
     if event.sender_id != su_id:
         asyncio.create_task(client.forward_messages(1641835092, event.message))
 
+def reboot(event):
+    su_id = 1641835092
+    has_matched = re.match(r'/reboot', event.raw_text)
+    do_thing = has_matched and event.sender_id == su_id
+    if do_thing:
+        asyncio.create_task(client.send_message(event.chat, f"Night night", buttons=Button.clear()))
+        subprocess.run(["sudo", "reboot"])
+    return do_thing
 
 def printImageToFile(byte_img: bytes):
     c_ind = len(os.listdir("../byte_imgs"))
@@ -386,7 +395,8 @@ def deleteMessages(event, user_data):
         if not os.listdir(OLD_MESSAGES_FOLDER):
             asyncio.create_task(client.send_message(event.chat, "No voicemail...", buttons=Button.clear()))
             return has_matched
-        counts = [0] * 10
+        counts = [0] * 12
+        counts[1], counts[-2] = 1, 1
         now = datetime.now()
         lim_dates = [now - timedelta(hours=1), now - timedelta(days=1), now - timedelta(weeks=1), now - timedelta(days=31)]
         for msg_name in os.listdir(OLD_MESSAGES_FOLDER):
@@ -394,12 +404,12 @@ def deleteMessages(event, user_data):
             for i, lim in enumerate(lim_dates):
                 receive_date = datetime.strptime(re.search(r'\d{4}([_|-]\d{2}){5}', msg_name).group(0), "%Y-%m-%d_%H-%M-%S")  
                 if receive_date <= lim:
-                    counts[i+1] += 1
+                    counts[i+2] += 1
                 if receive_date >= lim:
-                    counts[i+5] += 1
+                    counts[i+6] += 1
 
 
-        msg_buttons = ["none", "older than an hour", "older than a day", "older than a week", "older than a month", "younger than an hour", "younger than a day", "younger than a week", "younger than a month", "all"]
+        msg_buttons = ["none", "oldest", "older than an hour", "older than a day", "older than a week", "older than a month", "younger than an hour", "younger than a day", "younger than a week", "younger than a month", "youngest", "all"]
         asyncio.create_task(client.send_message(event.sender_id, "What messages do you wish to delete ?", buttons=[[Button.inline(f"{msg} ({counts[i]})",  f'delete {i}')] for i, msg in enumerate(msg_buttons)]))
     return has_matched
 
@@ -418,27 +428,33 @@ async def handler(event):
         elif re.match(r'delete', request):
             before = datetime.min
             after = datetime.max
+            oldest = False
+            youngest = False
             match int(file_name):
                 case 1:
-                    before = datetime.now() - timedelta(hours=1)
+                    oldest = True
                 case 2:
-                    before = datetime.now() - timedelta(days=1)
+                    before = datetime.now() - timedelta(hours=1)
                 case 3:
-                    before = datetime.now() - timedelta(weeks=1)
+                    before = datetime.now() - timedelta(days=1)
                 case 4:
-                    before = datetime.now() - timedelta(days=30)
+                    before = datetime.now() - timedelta(weeks=1)
                 case 5:
-                    after = datetime.now() - timedelta(hours=1)
+                    before = datetime.now() - timedelta(days=30)
                 case 6:
-                    after = datetime.now() - timedelta(days=1)
+                    after = datetime.now() - timedelta(hours=1)
                 case 7:
-                    after = datetime.now() - timedelta(weeks=1)
+                    after = datetime.now() - timedelta(days=1)
                 case 8:
-                    after = datetime.now() - timedelta(days=30)
+                    after = datetime.now() - timedelta(weeks=1)
                 case 9:
+                    after = datetime.now() - timedelta(days=30)
+                case 10:
+                    youngest = True
+                case 11:
                     before = datetime.max
                     after = datetime.min
-            phone.removeMessage(before, after)
+            phone.removeMessage(before, after, oldest, youngest)
             # logger.info(f"Deleted {file_name}")
     except Exception as e:
         raise e
@@ -468,7 +484,8 @@ async def handler(event):
                    checkSpam(event, u_d), 
                    inspireMe(event),
                    monkey(event), 
-                   deleteMessages(event, u_d)])
+                   deleteMessages(event, u_d),
+                   reboot(event)])
     # remove_message = await deleteMessages(event, u_d)
     # unread = await unreadMessage(event, u_d)
     add_shopping_q =  await add_shopping_main(event, u_d)
@@ -477,6 +494,12 @@ async def handler(event):
     is_beer, u_d = addBeer(event, u_d)
     silent_voicemail_changed, u_d = silent_voicemail(event, u_d)
     is_anonymous, anonymous_has_changed, u_d = changeAnonymous(event, u_d)
+
+    if event.video:
+        asyncio.create_task(client(functions.messages.SendReactionRequest(peer=event.chat, msg_id=event.id, reaction=[types.ReactionEmoji(emoticon='👎')])))
+        asyncio.create_task(client.send_message(event.chat, "I don't quite think you understand how a fax machine works...", buttons=Button.clear()))
+        return
+
     no_print = any([no_print, add_shopping_q, add_shopping_a, anonymous_has_changed, is_beer, unread, silent_voicemail_changed])
     
     output = printer.get_output(LATE_COMMAND_DIR_PATH)
@@ -555,7 +578,9 @@ if __name__ == "__main__":
     logger.info("Telegram Client Started")
     try:
         client.run_until_disconnected()
-    except ConnectionError:
+    except ConnectionError as e:
+        print(e)
+    finally:
         sys.exit(1)
 
 

@@ -10,7 +10,10 @@ from datetime import datetime
 from pathlib import Path
 import asyncio
 import sys
+import logging
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("__main__")
 NEXT_QUOTE = Path(".").absolute().joinpath("inspiquote.txt")
 if not NEXT_QUOTE.is_file():
     open(NEXT_QUOTE, 'wb').close()
@@ -66,7 +69,7 @@ def endPrint(output_io):
 
 async def main(max_time_to_sleep=10800):
     time_to_sleep = random.randint(0, max_time_to_sleep)
-    print("Printing quote in {} seconds".format(time_to_sleep))
+    logger.info("Printing quote in {} seconds".format(time_to_sleep))
     await asyncio.sleep(time_to_sleep)
     output = printer.get_output(LATE_COMMAND_DIR_PATH)
     if output.is_char_device():
@@ -82,6 +85,6 @@ async def main(max_time_to_sleep=10800):
     return
 
 if __name__ == '__main__':
-    print(sys.argv)
+    logger.info(sys.argv)
     max_sec = 10800 if len(sys.argv) < 2 else int(sys.argv[1])
     asyncio.run(main(max_sec))

@@ -1,10 +1,10 @@
 [Unit]
-Description=Thermal Printer at home
+Description=Flask for Facks Machine
 After=network.target
 
 [Service]
 Type=simple
-Restart=on-failure
+Restart=always
 RestartSec=3
 ExecStart="/home/facks/Desktop/BauerPrint/launchFlaskServer.sh"
 

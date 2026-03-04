@@ -5,3 +5,4 @@ cd $SCRIPTPATH
 echo $SCRIPTPATH
 venv/bin/python3 script/telegram_client.py &
 wait
+# exit 1
