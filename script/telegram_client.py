@@ -255,7 +255,7 @@ def sendToSuperUser(event):
         asyncio.create_task(client.forward_messages(su_id, event.message))
 
 def reboot(event):
-    # su_id = 1641835092
+    # su_id = 1641835092python -m venv /python -m venv /python -m venv /
     has_matched = re.match(r'/reboot', event.raw_text)
     do_thing = has_matched and event.sender_id == su_id
     if do_thing:
