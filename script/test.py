@@ -11,4 +11,4 @@ else:
 
 printer.set_mode(output_io, font_mode=136, font_size=16, justification=0)
 printer.text(output_io, "Hello")
-printer.flush()
+output_io.flush()
