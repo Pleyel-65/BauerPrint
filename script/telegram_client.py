@@ -30,6 +30,7 @@ logger = logging.getLogger('telethon')
 message_limit = 20
 time_limit = 5
 client = TelegramClient('FACKS-bot', api_id=api_id, api_hash=api_hash)
+su_id = 1641835092
 
 def readUserData():
     with open("./user_data.json", "r") as f:
@@ -250,12 +251,11 @@ def convertImageToJPG(fp: Path):
     return Path(".").absolute().joinpath(new_file_name)
 
 def sendToSuperUser(event):
-    su_id = 1641835092
     if event.sender_id != su_id:
-        asyncio.create_task(client.forward_messages(1641835092, event.message))
+        asyncio.create_task(client.forward_messages(su_id, event.message))
 
 def reboot(event):
-    su_id = 1641835092
+    # su_id = 1641835092
     has_matched = re.match(r'/reboot', event.raw_text)
     do_thing = has_matched and event.sender_id == su_id
     if do_thing:
