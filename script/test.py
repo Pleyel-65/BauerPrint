@@ -9,6 +9,8 @@ if output.is_char_device():
 else:
     output_io = open(output.as_posix(), "ab")
 
+print(output)
 printer.set_mode(output_io, font_mode=136, font_size=16, justification=0)
 printer.text(output_io, "Hello")
+# print(output)
 output_io.flush()
