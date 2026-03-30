@@ -5,6 +5,7 @@ from flask_server import printer, LATE_COMMAND_DIR_PATH
 
 output = printer.get_output(LATE_COMMAND_DIR_PATH)
 if output.is_char_device():
+    print("char device")
     output_io = open(output.as_posix(), "wb")
 else:
     output_io = open(output.as_posix(), "ab")
@@ -15,3 +16,4 @@ printer.text(output_io, "Hello")
 # print(output)
 output_io.flush()
 output_io.close()
+print("closed")
