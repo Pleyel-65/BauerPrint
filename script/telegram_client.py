@@ -29,8 +29,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('telethon')
 message_limit = 20
 time_limit = 5
-client = TelegramClient('FACKS-bot', api_id=api_id, api_hash=api_hash)
-su_id = 1641835092
+client = TelegramClient('FACKS-bot', api_id=api_id, api_hash=api_hash, catch_up=True)
+
 
 def readUserData():
     with open("./user_data.json", "r") as f:
@@ -115,7 +115,7 @@ def checkBan(event, user_data):
     return is_banned
 
 def checkSpam(event, u_d):
-    if (str(event.sender_id) == "1641835092"):
+    if (str(event.sender_id) == str(su_id)):
         return False
     u_msg_hist = u_d["history"][str(event.sender_id)]
     is_spamming = len(u_msg_hist) > message_limit
@@ -255,7 +255,7 @@ def sendToSuperUser(event):
         asyncio.create_task(client.forward_messages(su_id, event.message))
 
 def reboot(event):
-    # su_id = 1641835092python -m venv /python -m venv /python -m venv /
+    # su_id = 1641835092
     has_matched = re.match(r'/reboot', event.raw_text)
     do_thing = has_matched and event.sender_id == su_id
     if do_thing:
