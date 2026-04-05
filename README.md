@@ -22,7 +22,7 @@ This repository contains the **`Home Printer`** package to interface with your t
     ```
 - Don't forget to run 
      ```
-    cd ~/Desktop/BauerPrint && chmod +x launchFlaskServer.sh && && chmod +x launchTelegramClient.sh && chmod +x inspireSom.sh && chmod +x printMenageNyass.sh && chmod +x voicemail.sh
+    cd ~/Desktop/BauerPrint && chmod +x launchFlaskServer.sh && chmod +x launchTelegramClient.sh && chmod +x inspireSom.sh && chmod +x printMenageNyass.sh && chmod +x voicemail.sh
     sudo cp /home/facks/Desktop/BauerPrint/bauerprint.service /lib/systemd/system/bauerprint.service &&  sudo cp /home/facks/Desktop/BauerPrint/facks-machine.service /lib/systemd/system/facks-machine.service
     sudo systemctl enable bauerprint.service && sudo systemctl enable facks-machine.service
     sudo reboot
