@@ -13,5 +13,6 @@
         "mode": 0,
         "size": 12,
         "justif": 0
-    }
+    },
+    "space_between_messages": 5
 }

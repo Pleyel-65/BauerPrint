@@ -535,19 +535,21 @@ async def handler(event):
     ts_cc = char_config["timestamp"]
     un_cc = char_config["user_name"]
     mb_cc = char_config["message_body"]
+    space_between_messages = char_config["space_between_messages"]
     printer.set_mode(output_io, font_mode=ts_cc["mode"], font_size=ts_cc["size"], justification=ts_cc["justif"])
     now_str = getDateTime()
     [printer.text(output_io, s) for s in now_str if s != ""]
     printer.set_mode(output_io, font_mode=un_cc["mode"], font_size=un_cc["size"], justification=un_cc["justif"])
+    
+    # If message is forwarded by super user, print original sender user name
     if event.forward and event.sender_id == su_id:
         sender = PrivateForwardedUser(event.forward.from_name) if not event.forward.sender_id else await event.forward.get_sender()
     else:
         sender = event.sender
+
+    # Sender name
     if is_anonymous:
         printer.text(output_io, "???????????")
-    # elif event.forward and event.sender_id == su_id:
-    #     if 
-    #     printer.text(output_io, event.forward.from_name)
     elif sender.first_name:
         l_name = "" if not sender.last_name else " " + sender.last_name
         output_str = sender.first_name + l_name
@@ -558,6 +560,7 @@ async def handler(event):
         printer.text(output_io, sender.last_name)
     else:
         printer.text(output_io, str(sender.id))
+    
     printer.set_mode(output_io, font_mode=mb_cc["mode"], font_size=mb_cc["size"], justification=mb_cc["justif"])
     # print(sender.first_name + " " + sender.last_name)
     if event.photo or event.sticker:
@@ -591,8 +594,9 @@ async def handler(event):
         event.raw_text = "New voicemail"
 
 
+    printer.set_mode(output_io, font_mode=mb_cc["mode"], font_size=mb_cc["size"], justification=mb_cc["justif"])
     printer.text(output_io, event.raw_text)
-    for _ in range(5):
+    for _ in range(space_between_messages):
         printer.text(output_io, "\n")
     endPrint(output_io)
 
