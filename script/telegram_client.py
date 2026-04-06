@@ -489,7 +489,7 @@ async def handler(event):
 async def disconnect(delay: int):
     logger.info(f"Telegram Client will disconnect in {delay} seconds")
     await asyncio.sleep(delay)
-    asyncio.create_task(client.disconnect())
+    await client.disconnect()
     
 
 
