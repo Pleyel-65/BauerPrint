@@ -31,6 +31,11 @@ message_limit = 20
 time_limit = 5
 client = TelegramClient('FACKS-bot', api_id=api_id, api_hash=api_hash, catch_up=True)
 
+class PrivateForwardedUser():
+    def __init__(self, name):
+        self.first_name = name
+        self.last_name = None
+
 def readFontModes():
     with open("./message_char_config.json", "r") as f:
         c_c = json.load(f)
@@ -534,20 +539,27 @@ async def handler(event):
     now_str = getDateTime()
     [printer.text(output_io, s) for s in now_str if s != ""]
     printer.set_mode(output_io, font_mode=un_cc["mode"], font_size=un_cc["size"], justification=un_cc["justif"])
+    if event.forward and event.sender_id == su_id:
+        sender = PrivateForwardedUser(event.forward.from_name) if not event.forward.sender_id else await event.forward.get_sender()
+    else:
+        sender = event.sender
     if is_anonymous:
         printer.text(output_io, "???????????")
-    elif event.sender.first_name:
-        l_name = "" if not event.sender.last_name else " " + event.sender.last_name
-        output_str = event.sender.first_name + l_name
+    # elif event.forward and event.sender_id == su_id:
+    #     if 
+    #     printer.text(output_io, event.forward.from_name)
+    elif sender.first_name:
+        l_name = "" if not sender.last_name else " " + sender.last_name
+        output_str = sender.first_name + l_name
         printer.text(output_io, output_str)
-    elif event.sender.username:
-        printer.text(output_io, event.sender.username)
-    elif event.sender.last_name:
-        printer.text(output_io, event.sender.last_name)
+    elif sender.username:
+        printer.text(output_io, sender.username)
+    elif sender.last_name:
+        printer.text(output_io, sender.last_name)
     else:
-        printer.text(output_io, str(event.sender.id))
+        printer.text(output_io, str(sender.id))
     printer.set_mode(output_io, font_mode=mb_cc["mode"], font_size=mb_cc["size"], justification=mb_cc["justif"])
-    # print(event.sender.first_name + " " + event.sender.last_name)
+    # print(sender.first_name + " " + sender.last_name)
     if event.photo or event.sticker:
     # if event.photo:
         img_name = Path(".").absolute().joinpath("downloaded_media")
