@@ -23,8 +23,8 @@ import sys
 from voicemail import Phone, NEW_MESSAGES_FOLDER, OLD_MESSAGES_FOLDER
 import subprocess
 
-now_time = ""
-now_date = ""
+# now_time = ""
+# now_date = ""
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('telethon')
 message_limit = 20
@@ -54,14 +54,27 @@ def writeUserData(user_data):
 def getDateTime() -> list[str]:
     now = datetime.now()
     output = ["", ""]
-    global now_date
-    global now_time
+    if not Path("./now_dates.json").is_file():
+        with open("./now_dates.json", "w") as f:
+            json.dump({"now_date": "", "now_time": ""}, f)
+        now_date = ""
+        now_time = ""
+    else:
+        with open("./now_dates.json", "r") as f:
+            data = json.load(f)
+            now_date = data["now_date"]
+            now_time = data["now_time"]
+    # global now_date
+    # global now_time
     if now_date != now.strftime("%d-%m-%Y"):
         now_date = now.strftime("%d-%m-%Y")
         output[0] = now_date
     if now_time != now.strftime("%H:%M"):
         now_time = now.strftime("%H:%M")
         output[1] = now_time
+    if any([d != "" for d in output]):
+        with open("./now_dates.json", "w") as f:
+            json.dump({"now_date": now_date, "now_time": now_time}, f)
     return output
 
 def inspireMe(event):
