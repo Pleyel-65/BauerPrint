@@ -127,7 +127,7 @@ class Printer:
         # 0: Left, 1: Centered, 2:Right
         if justification is not None:
             output.write(b"\x1b\x61" + bytes([justification]))
-        # Font mode: https://reference.epson-biz.com/modules/ref_escpos/index.php?content_id=23
+        # Font mode: https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/esc_exclamation.html
         if font_mode is not None:
             output.write(b"\x1b\x21" + bytes([font_mode]))
         # Font size

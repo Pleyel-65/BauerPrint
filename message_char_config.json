@@ -1,0 +1,17 @@
+{
+    "timestamp":{
+        "mode": 0,
+        "size": 8,
+        "justif": 1
+    },
+    "user_name":{
+        "mode": 136,
+        "size": 16,
+        "justif": 0
+    },
+    "message_body":{
+        "mode": 0,
+        "size": 12,
+        "justif": 0
+    }
+}

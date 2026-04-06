@@ -31,6 +31,10 @@ message_limit = 20
 time_limit = 5
 client = TelegramClient('FACKS-bot', api_id=api_id, api_hash=api_hash, catch_up=True)
 
+def readFontModes():
+    with open("./message_char_config.json", "r") as f:
+        c_c = json.load(f)
+        return c_c
 
 def readUserData():
     with open("./user_data.json", "r") as f:
@@ -463,7 +467,12 @@ async def handler(event):
         await event.delete()
         return
 
-
+# @client.on(events.)
+async def disconnect(delay: int):
+    logger.info(f"Telegram Client will disconnect in {delay} seconds")
+    await asyncio.sleep(delay)
+    asyncio.create_task(client.disconnect())
+    
 
 
 @client.on(events.NewMessage)
@@ -517,11 +526,14 @@ async def handler(event):
     if any([no_print, is_print_beer]):
         return
 
-
-    printer.set_mode(output_io, font_mode=0, font_size=8, justification=1)
+    char_config = readFontModes()
+    ts_cc = char_config["timestamp"]
+    un_cc = char_config["user_name"]
+    mb_cc = char_config["message_body"]
+    printer.set_mode(output_io, font_mode=ts_cc["mode"], font_size=ts_cc["size"], justification=ts_cc["justif"])
     now_str = getDateTime()
     [printer.text(output_io, s) for s in now_str if s != ""]
-    printer.set_mode(output_io, font_mode=136, font_size=16, justification=0)
+    printer.set_mode(output_io, font_mode=un_cc["mode"], font_size=un_cc["size"], justification=un_cc["justif"])
     if is_anonymous:
         printer.text(output_io, "???????????")
     elif event.sender.first_name:
@@ -534,7 +546,7 @@ async def handler(event):
         printer.text(output_io, event.sender.last_name)
     else:
         printer.text(output_io, str(event.sender.id))
-    printer.set_mode(output_io, font_mode=0, font_size=12)
+    printer.set_mode(output_io, font_mode=mb_cc["mode"], font_size=mb_cc["size"], justification=mb_cc["justif"])
     # print(event.sender.first_name + " " + event.sender.last_name)
     if event.photo or event.sticker:
     # if event.photo:
@@ -572,12 +584,16 @@ async def handler(event):
         printer.text(output_io, "\n")
     endPrint(output_io)
 
+async def main():
+    disconnect_in = 60 * 60 * 3
+    await client.start(bot_token=bot_token)
+    asyncio.create_task(disconnect(disconnect_in))
+    logger.info("Telegram Client Started")
+    await client.run_until_disconnected()
 
 if __name__ == "__main__":
-    client.start(bot_token=bot_token)
-    logger.info("Telegram Client Started")
     try:
-        client.run_until_disconnected()
+        asyncio.run(main())
     except ConnectionError as e:
         print(e)
     finally:
