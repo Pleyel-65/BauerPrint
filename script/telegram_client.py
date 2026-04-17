@@ -29,7 +29,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('telethon')
 message_limit = 20
 time_limit = 5
-client = TelegramClient('FACKS-bot', api_id=api_id, api_hash=api_hash, catch_up=True)
+client = TelegramClient('FACKS-bot', api_id=api_id, api_hash=api_hash)
+is_catching_up = True
+multiple_image_lock = asyncio.Lock()
 
 class PrivateForwardedUser():
     def __init__(self, name):
@@ -256,18 +258,21 @@ def setMsgHistory(event, user_data):
     user_data["history"][usr_id] = [d for d in user_data["history"][usr_id] if datetime.strptime(d, date_format) > now - timedelta(minutes=time_limit)]
     return user_data
 
-def convertImageToJPG(fp: Path):
-    new_file_name = "replace_me.jpeg"
-    if os.path.isfile(f"./{new_file_name}"):
-        os.remove(new_file_name)
+async def convertImageToJPG(dwnld_file_name: Path):
+    async with multiple_image_lock:
+        downloaded_media = [Path(f) for f in os.listdir(Path('.').absolute()) if re.search(re.compile(f'{dwnld_file_name}( \\(\\d+\\))?\\..*'), f)]
+        fp = Path(downloaded_media[0])
+        new_file_name = "replace_me.jpeg"
+        if os.path.isfile(f"./{new_file_name}"):
+            os.remove(new_file_name)
 
-    if not fp.suffix in [".jpg", ".jpeg"]:
-        os.system(f'''ffmpeg -i {fp} -vf "format=yuva444p,geq='if(lte(alpha(X,Y),1),255,p(X,Y))':'if(lte(alpha(X,Y),1),128,p(X,Y))':'if(lte(alpha(X,Y),1),128,p(X,Y))'" {new_file_name}''')
-        # os.remove(fp)
-    else:
-        os.system(f'''ffmpeg -i {fp} -pix_fmt yuv444p {new_file_name}''')
-        # fp.rename(new_file_name)
-    os.remove(fp)
+        if not fp.suffix in [".jpg", ".jpeg"]:
+            os.system(f'''ffmpeg -i '{fp}' -vf "format=yuva444p,geq='if(lte(alpha(X,Y),1),255,p(X,Y))':'if(lte(alpha(X,Y),1),128,p(X,Y))':'if(lte(alpha(X,Y),1),128,p(X,Y))'" {new_file_name}''')
+            # os.remove(fp)
+        else:
+            os.system(f'''ffmpeg -i '{fp}' -pix_fmt yuv444p {new_file_name}''')
+            # fp.rename(new_file_name)
+        os.remove(fp)
 
 
     return Path(".").absolute().joinpath(new_file_name)
@@ -279,11 +284,15 @@ def sendToSuperUser(event):
 def reboot(event):
     # su_id = 1641835092
     has_matched = re.match(r'/reboot', event.raw_text)
-    do_thing = has_matched and event.sender_id == su_id
-    if do_thing:
-        asyncio.create_task(client.send_message(event.chat, f"Night night", buttons=Button.clear()))
-        subprocess.run(["sudo", "reboot"])
+    do_thing = has_matched and event.sender_id == su_id and not is_catching_up
     return do_thing
+
+def restart(event):
+    # su_id = 1641835092
+    has_matched = re.match(r'/restart', event.raw_text)
+    do_thing = has_matched and event.sender_id == su_id and not is_catching_up
+    return do_thing
+        
 
 def printImageToFile(byte_img: bytes):
     c_ind = len(os.listdir("../byte_imgs"))
@@ -436,7 +445,7 @@ def deleteMessages(event, user_data):
     return has_matched
 
 @client.on(events.CallbackQuery)
-async def handler(event):
+async def phoneHandler(event):
     phone = Phone()
     request = str(event.data, 'utf-8')
     logger.info(f"Got an order {request}")
@@ -495,7 +504,10 @@ async def disconnect(delay: int):
 
 @client.on(events.NewMessage)
 #@client.on(events.NewMessage(chats = [-5259715117]))
-async def handler(event):
+async def messageHandler(event):
+    if event.sender.bot: 
+        logger.info(f"Message sent from bot, skipping...")
+        return
 
     # TODO: make telegram client write message to file in bytes and have another worker printing them out then remove them as soon as he finds them
     # TODO: clean the fuck up
@@ -503,6 +515,18 @@ async def handler(event):
     logger.info(f"Received message from {event.sender.id}")
     logger.info(f"Has photo : {event.photo or event.sticker}")
     logger.info(f"{event.raw_text}")
+    askedReboot = reboot(event)
+    askedRestart = restart(event)
+    if askedReboot or askedRestart:
+        await client.send_message(event.chat, f"Catching up before {'reboot' if askedReboot else 'restart'}", buttons=Button.clear())
+        # await client.catch_up()
+        if askedReboot:
+            await client.send_message(event.chat, f"Night night", buttons=Button.clear())
+            return subprocess.run(["sudo", "reboot"])
+        else:
+            await client.send_message(event.chat, f"Gone for a quick nap", buttons=Button.clear())
+            return subprocess.run(["sudo", "systemctl", "restart", "facks-machine.service"])
+
     sendToSuperUser(event)
     u_d = readUserData()
     u_d = setMsgHistory(event, u_d)
@@ -511,8 +535,7 @@ async def handler(event):
                    checkSpam(event, u_d), 
                    inspireMe(event),
                    monkey(event), 
-                   deleteMessages(event, u_d),
-                   reboot(event)])
+                   deleteMessages(event, u_d)])
     # remove_message = await deleteMessages(event, u_d)
     # unread = await unreadMessage(event, u_d)
     add_shopping_q =  await add_shopping_main(event, u_d)
@@ -578,7 +601,8 @@ async def handler(event):
     # print(sender.first_name + " " + sender.last_name)
     if event.photo or event.sticker:
     # if event.photo:
-        img_name = Path(".").absolute().joinpath("downloaded_media")
+        downloaded_fp_name = "downloaded_media"
+        img_name = Path(".").absolute().joinpath(downloaded_fp_name)
         # if img_path.is_file():
         #     os.remove(img_path)
 
@@ -590,12 +614,17 @@ async def handler(event):
         #         new_img.save(str(Path(".").absolute().joinpath("replace_me.jpg")),"jpeg")
         #     os.remove(img_path)
 
-        img_path = Path(glob.glob(str(img_name)+".*")[0])
-        
-        img_path = convertImageToJPG(img_path)
-        with ThermalPrinterImage(img_path) as img:    
+        # while downloaded_media:
+        #     try:
+        conv_img_path = await convertImageToJPG(downloaded_fp_name)
+        with ThermalPrinterImage(conv_img_path) as img:    
             byte_img = img.get_byte_image()
             printer.image(output_io, byte_img)
+            # except FileNotFoundError:
+            #     continue
+            # finally:
+            #     downloaded_media = [Path(f) for f in os.listdir(Path('.').absolute()) if re.search(r'downloaded_media( \(\d+\))?\..*', f)]
+            #     logger.info(downloaded_media)
     # logger.info(event)
     if event.voice:
         f_name = f"{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_{event.sender_id if not is_anonymous else 0000000000}"
@@ -615,9 +644,13 @@ async def handler(event):
 
 async def main():
     disconnect_in = 60 * 60 * 3
+    global is_catching_up
+    is_catching_up = True
     await client.start(bot_token=bot_token)
     asyncio.create_task(disconnect(disconnect_in))
     logger.info("Telegram Client Started")
+    await client.catch_up()
+    is_catching_up = False
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
