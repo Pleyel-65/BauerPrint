@@ -27,7 +27,7 @@ This repository contains the **`Home Printer`** package to interface with your t
     sudo systemctl enable bauerprint.service && sudo systemctl enable facks-machine.service
     sudo reboot
     ```
-- You also need to create a `.../BauerPrint/script/my_secret_keys.py` file with :
+- You also need to create a `.../BauerPrint/script/telegram_methods/my_secret_keys.py` file with :
     ```
     api_id = 00000000 # put your API ID (check out : https://my.telegram.org/auth?to=apps)
     api_hash = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' # put your API hash (check out : https://my.telegram.org/auth?to=apps)
