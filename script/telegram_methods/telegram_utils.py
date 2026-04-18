@@ -67,7 +67,8 @@ def endPrint(output_io):
 
 def sendToSuperUser(client, msg):
     if msg.sender.id != su_id:
-        asyncio.create_task(client.forward_messages(su_id, msg.message))
+        logger.info(f'Forwarding to {su_id}')
+        asyncio.create_task(client.forward_messages(su_id, msg))
 
 multiple_image_lock = asyncio.Lock()
 async def convertImageToJPG(dwnld_file_name: Path):
