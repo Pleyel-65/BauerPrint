@@ -86,7 +86,7 @@ def noAscii(client, message):
         asyncio.create_task(client(functions.messages.SendReactionRequest(peer=message.chat, msg_id=message.id, reaction=[types.ReactionEmoji(emoticon='😢')])))
         asyncio.create_task(client.send_message(message.chat, "申し訳ございませんが、その「{}」の字を印刷出来ません".format(", ".join(forbidden_char)), buttons=Button.clear()))
     message.raw_text = re.sub(r'[^\x20-\xFF\r\n]', '', message.raw_text)
-    return False
+    return has_matched
 
 
 async def add_shopping_main(client, message, user_data):

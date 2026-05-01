@@ -159,8 +159,8 @@ async def handleMessage(message, is_catching_up = False):
     else:
         output_io = open(output.as_posix(), "ab")
 
+    noascii = noAscii(client, message)
     no_print = any([no_print, print_shopping(client, message, output_io, u_d), 
-                    noAscii(client, message), 
                     menageNyass(client, message, output_io, u_d), 
                     cutTicket(client, message, output_io, u_d)])
     is_print_beer, u_d = await printBeerTotal(client, message, output_io, u_d)
@@ -242,7 +242,8 @@ async def handleMessage(message, is_catching_up = False):
     for _ in range(space_between_messages):
         printer.text(output_io, "\n")
     endPrint(output_io)
-
+    if not noascii:
+        asyncio.create_task(client(functions.messages.SendReactionRequest(peer=message.chat, msg_id=message.id, reaction=[types.ReactionEmoji(emoticon='✍️')])))
 
 # async def sync_up():
 #     u_d = readUserData()
