@@ -93,7 +93,7 @@ async def phoneHandler(event):
 @client.on(events.NewMessage)
 async def messageEventHandler(event):
     message = event.message
-    if event.sender.bot: 
+    if event.sender and event.sender.bot: 
         logger.info(f"Message sent from bot, skipping...")
         return
     rez = await handleMessage(message, is_catching_up)
@@ -113,7 +113,11 @@ async def handleMessage(message, is_catching_up = False):
     u_d = readUserData()
     u_d["last_seen_message"][str(message.chat.id)] = message.id
     writeUserData(u_d)
-    logger.info(f"Received message from {message.sender.id}")
+    if message.sender:
+        logger.info(f"Received message from {message.sender.id}")
+    else:
+        logger.info(f"Received message from NoneType")
+        
     logger.info(f"Has photo : {message.photo or message.sticker}")
     logger.info(f"{message.raw_text}")
     askedReboot = reboot(message, is_catching_up)
@@ -175,17 +179,19 @@ async def handleMessage(message, is_catching_up = False):
     space_between_messages = char_config["space_between_messages"]
     printer.set_mode(output_io, font_mode=ts_cc["mode"], font_size=ts_cc["size"], justification=ts_cc["justif"])
     now_str = getDateTime()
-    [printer.text(output_io, s) for s in now_str if s != ""]
+    for s in now_str:
+        if s != "":
+            printer.text(output_io, s)
     printer.set_mode(output_io, font_mode=un_cc["mode"], font_size=un_cc["size"], justification=un_cc["justif"])
     
     # If message is forwarded by super user, print original sender user name
-    if message.forward and message.sender.id == su_id:
+    if message.forward and message.sender and message.sender.id == su_id:
         sender = PrivateForwardedUser(message.forward.from_name) if not message.forward.sender_id else await message.forward.get_sender()
     else:
         sender = message.sender
 
     # Sender name
-    if is_anonymous:
+    if is_anonymous or not message.sender:
         printer.text(output_io, "???????????")
     elif sender.first_name:
         l_name = "" if not sender.last_name else " " + sender.last_name
@@ -227,18 +233,19 @@ async def handleMessage(message, is_catching_up = False):
             #     downloaded_media = [Path(f) for f in os.listdir(Path('.').absolute()) if re.search(r'downloaded_media( \(\d+\))?\..*', f)]
             #     logger.info(downloaded_media)
     # logger.info(event)
-    if message.voice:
-        f_name = f"{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_{message.sender.id if not is_anonymous else 0000000000}"
+    text_to_print = message.raw_text
+    if message.voice or message.audio:
+        f_name = f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{message.sender.id if not is_anonymous else 0000000000}"
         if u_d["silent_voicemail"]:
             download_path = OLD_MESSAGES_FOLDER.joinpath(f_name)
         else:
             download_path = NEW_MESSAGES_FOLDER.joinpath(f_name)
         await message.download_media(str(download_path))
-        message.raw_text = "New voicemail"
+        text_to_print = "New voicemail"
 
 
     printer.set_mode(output_io, font_mode=mb_cc["mode"], font_size=mb_cc["size"], justification=mb_cc["justif"])
-    printer.text(output_io, message.raw_text)
+    printer.text(output_io, text_to_print)
     for _ in range(space_between_messages):
         printer.text(output_io, "\n")
     endPrint(output_io)
