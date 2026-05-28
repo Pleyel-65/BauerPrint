@@ -45,15 +45,16 @@ class Printer:
         self.printer_connected = False
         self.get_output(check_dir)
 
-    def __reset_printer(self, output_file: Path, check_dir=None):
+    def _reset_printer(self, output_file: Path, check_dir=None):
         # Set baud rate
-        subprocess.run('stty -F "' + output_file.as_posix() + '" 115200 raw -echo', shell=True)
+        subprocess.run(["stty", "-F", output_file.as_posix(), "9600", "raw", "-echo"], check=True)
         # Initiate printer
         with open(output_file.as_posix(), "wb") as output:
             self.set_mode(output, font_mode=0, justification=0, font_size=12)
             # Dump waiting commands if any
             if isinstance(check_dir, Path):
                 self.__print_queued_commands_from_files(output, check_dir)
+        time.sleep(0.1)
 
     def __print_queued_commands_from_files(self, output, dir_path: Path):
         if self.printer_connected:
@@ -61,7 +62,7 @@ class Printer:
             if len(command_files) > 0:
                 for cmd_file in command_files:
                     with open(cmd_file, "rb") as cmd:
-                        output.write(cmd.read())
+                        Printer._write_out(output, cmd.read())
                     os.unlink(cmd_file)
 
     def get_output(self, check_dir=None):
@@ -73,7 +74,7 @@ class Printer:
                 # If reconnect
                 if not self.printer_connected:
                     self.printer_connected = True
-                    self.__reset_printer(output_file, check_dir)
+                    self._reset_printer(output_file, check_dir)
                 break
         # Redirect output to printcmd files
         if output_file.as_posix() == "/dev/null":
@@ -126,25 +127,25 @@ class Printer:
     def set_mode(output, font_mode=None, justification=None, font_size=None):
         # 0: Left, 1: Centered, 2:Right
         if justification is not None:
-            output.write(b"\x1b\x61" + bytes([justification]))
+            Printer._write_out(output, b"\x1b\x61" + bytes([justification]))
         # Font mode: https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/esc_exclamation.html
         if font_mode is not None:
-            output.write(b"\x1b\x21" + bytes([font_mode]))
+            Printer._write_out(output, b"\x1b\x21" + bytes([font_mode]))
         # Font size
         if font_size is not None:
-            output.write(b"\x1d\x21" + bytes([font_size]))
+            Printer._write_out(output, b"\x1d\x21" + bytes([font_size]))
 
     @staticmethod
     def text(output, string: str):
         string = re.sub(r'[’]', "'", string)
         string = re.sub(r'[”“]', '"', string)
-        output.write(Printer.__utf_to_escpos(Printer.wrap(string).encode("utf-8")))
-        output.write(b"\n")
+        Printer._write_out(output, Printer.__utf_to_escpos(Printer.wrap(string).encode("utf-8")))
+        Printer._write_out(output, b"\n")
 
     @staticmethod
     def cut(output):
         Printer.set_mode(output, font_mode=0, justification=0, font_size=12)
-        output.write(b"\n\n\n\n\n\n\n\x1b\x69\n")
+        Printer._write_out(output, b"\n\n\n\n\n\n\n\x1b\x69\n")
 
     @staticmethod
     def image(output, image):
@@ -164,12 +165,21 @@ class Printer:
         """
         if not isinstance(image, bytes):
             raise TypeError("Oops... image must be byte array")
-        output.write(b"\n\n")
-        output.flush()
-        output.write(b"\x1d\x76\x30\x00" + image)
-        output.flush()
-        output.write(b"\n\n")
+        Printer._write_out(output, b"\n\n")
+        chunk_size = 256
+        payload = b"\x1d\x76\x30\x00" + image
+        Printer._write_out(output, payload)
+        # for i in range(0, len(payload), chunk_size):
+        #     Printer._write_out(output, payload[i:i+chunk_size], 10)
+        Printer._write_out(output, b"\n\n")
 
+    @staticmethod 
+    def _write_out(output, msg, delay=100):
+        output.write(msg)
+        output.flush()
+        # if hasattr(output, "fileno"):
+        #     os.fsync(output.fileno())
+        time.sleep(delay/1000)
 
 if __name__ == "__main__":
     with ThermalPrinterImage("../../replace_me.jpeg") as fckimg:

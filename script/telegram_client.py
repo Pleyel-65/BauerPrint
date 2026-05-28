@@ -20,7 +20,7 @@ from telegram_methods.telegram_checks import checkBan, checkSpam, setMsgHistory
 from telegram_methods.telegram_functionnalities import inspireMe, reboot, restart, monkey, deleteMessages, add_shopping_main, add_shopping_list, addBeer, unreadMessage, silent_voicemail, changeAnonymous, print_shopping, noAscii, menageNyass, cutTicket, printBeerTotal
 from telegram_methods.my_secret_keys import *
 
-
+from subprocess import SubprocessError
 
 # class AskedForReboot(Exception):
 #     pass
@@ -171,6 +171,10 @@ async def handleMessage(message, is_catching_up = False):
     writeUserData(u_d)
     if any([no_print, is_print_beer]):
         return
+    try:
+        printer._reset_printer(output)
+    except SubprocessError:
+        return "reboot"
 
     char_config = readFontModes()
     ts_cc = char_config["timestamp"]

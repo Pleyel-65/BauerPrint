@@ -3,6 +3,8 @@ from PIL import Image, ImageOps, ImageEnhance
 import base64
 import io
 from functools import partial
+import logging
+logger = logging.getLogger(__name__)
 
 class ThermalPrinterImage:
     def __init__(self, file):
@@ -40,6 +42,12 @@ class ThermalPrinterImage:
         yl = int(self.image.height % 256)
         yh = int(self.image.height // 256)
 
+        # width_bytes = self.image.width // 8
+        # height = self.image.height
+        # expected = width_bytes * height
+        # actual = len(dot_image)
+
+        # logger.critical(f"{expected}, {actual}, {actual - expected}")
 
         # print((xh * 256 * 8 + xl)*(yh * 256 + yl))
         # Conform to [GS, v, 0, xl, xh, yl, yh, d0, d1 ... dk] command in ESC/POS
