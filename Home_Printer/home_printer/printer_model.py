@@ -47,7 +47,7 @@ class Printer:
 
     def _reset_printer(self, output_file: Path, check_dir=None):
         # Set baud rate
-        subprocess.run(["stty", "-F", output_file.as_posix(), "9600", "raw", "-echo"], check=True)
+        subprocess.run(["stty", "-F", output_file.as_posix(), "115200", "raw", "-echo"], check=True)
         # Initiate printer
         with open(output_file.as_posix(), "wb") as output:
             self.set_mode(output, font_mode=0, justification=0, font_size=12)
